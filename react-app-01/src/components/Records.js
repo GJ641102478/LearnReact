@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import Record from './Record';
-import axios from 'axios';
+import RecordForm from './RecordForm';
+import AmountBox from './AmountBox';
+import * as RecordAPI from '../utils/RecordsAPI';
 
 export default class Records extends Component {
 
@@ -14,7 +16,7 @@ export default class Records extends Component {
     }
 
     componentDidMount(){
-        axios.get("https://5b350c8143559600147d58e8.mockapi.io/api/v1/records").then(
+        RecordAPI.getApi().then(
             respoonse => this.setState({
                 isLoaded: true,
                 records: respoonse.data
@@ -27,32 +29,108 @@ export default class Records extends Component {
         ) 
     }
     
+    addRecord(record){
+        this.setState({
+            error: null,
+            isLoaded: true,
+            records: [
+                ...this.state.records,
+                record
+            ]
+        })
+    }
+
+    updateRecord(record, data){
+        const recordIndex = this.state.records.indexOf(record);
+        const newRecords = this.state.records.map((item, index) => {
+            if(index !== recordIndex) {
+                return item;
+            }
+            return {
+                ...item,
+                ...data
+            };
+        });
+        this.setState({
+            records: newRecords
+        });
+    }
+
+    deleteRecord(record){
+        const recordIndex = this.state.records.indexOf(record);
+        const newRecords = this.state.records.filter((item, index) => index !== recordIndex);
+        this.setState({
+            records: newRecords
+        });
+    }
+
+   credits(){
+        let credits = this.state.records.filter((record) => {
+            return record.amount >= 0;
+        })
+        return credits.reduce((pre, cur) => {
+            return pre + Number.parseInt(cur.amount, 0);
+        }, 0);
+   }
+
+   debits(){
+        let credits = this.state.records.filter((record) => {
+            return record.amount <= 0;
+        })
+        return credits.reduce((pre, cur) => {
+            return pre + Number.parseInt(cur.amount, 0);
+        }, 0);
+   }
+
+   balance(){
+        return this.credits() + this.debits();
+   }
+    
     render(){
-
         const { error, isLoaded, records } = this.state;
-        if(error) { //true
-            return <div>Error: { error.message } </div>;
-        }else if(!isLoaded) {
-            return <div>正在加载中ing。。。</div>;
-        }
+        let recordsComponent;
 
-        return (
-            <div>
-                <h2>Records</h2>
+        if(error) { //true
+            recordsComponent =  <div>Error: { error.message } </div>;
+        }else if(!isLoaded) {
+            recordsComponent =  <div>正在加载中ing。。。</div>;
+        }else{
+            recordsComponent = (
                 <table className="table table-bordered">
                     <thead>
                         <tr>
                             <th>时间</th>
                             <th>标题</th>
                             <th>金额</th>
+                            <th>操作</th>
                         </tr>
                     </thead>
                     <tbody>
-                        { records.map((record) => 
-                            <Record key={record.id} {...record} />
-                        ) }
+                        { records.map((record) =>  
+                            (<Record 
+                                key={record.id} 
+                                record={record} 
+                                handleEditRecord={this.updateRecord.bind(this)} 
+                                handleDeleteRecord={this.deleteRecord.bind(this)}/>
+                            )
+                        )}
                     </tbody>
                 </table>
+            )   
+        }
+
+        return (
+            <div>
+                <h2>Records</h2>
+                <div>
+                    <AmountBox text="收入" amount={this.credits()}/>
+                    <AmountBox text="支出" amount={this.debits()}/>
+                    <AmountBox text="结余" amount={this.balance()}/>
+                </div>
+                <div>
+                    <RecordForm handleNewRecord={this.addRecord.bind(this)}/>
+                </div> 
+                { recordsComponent }
             </div>
         );
     }

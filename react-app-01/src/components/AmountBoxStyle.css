@@ -1,0 +1,23 @@
+.amountBoxClass{
+    display: inline-block;
+    margin-right: 10px;
+    width: 200px;
+    
+    /* height: 50px; */ 
+  }
+
+  .amountBoxHeader{
+    border: 1px solid #000;
+    border-bottom: 1px solid white;
+    /* width: 100px;
+    height: 50px; */
+    /* background-color: red; */
+  }
+
+  .amountBoxBody{
+    border: 1px solid #000;
+    /* width: 100px;
+    height: 50px; */
+    /* background-color: green; */
+  }
+  
